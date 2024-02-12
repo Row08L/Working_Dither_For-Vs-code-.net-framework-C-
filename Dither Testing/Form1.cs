@@ -14,6 +14,15 @@ namespace Dither_Testing
 {
     public partial class Form1 : Form
     {
+        Rectangle player;
+        bool wKeyDown = false;
+        bool aKeyDown = false;
+        bool sKeyDown = false;
+        bool dKeyDown = false;
+        Pen whitePen = new Pen(Color.White, 50);
+        Graphics preFilter;
+        Bitmap form1Bitmap;
+
         int[,] bayer2 = new int[2, 2]
         {
             {0, 2},
@@ -65,17 +74,21 @@ namespace Dither_Testing
 };
 
         #region Dithering Test
-        private Bitmap Dither(PaintEventArgs e, double spreadValue)
+        private  Bitmap Dither( Bitmap originalImage,  double spreadValue, int numberOfColors)
         {
-            Bitmap bitmap = Properties.Resources.Capture;
-            int width = bitmap.Width;
-            int height = bitmap.Height;
-            int dementions = 8;
-            int n = 100;
-            Color[] neonPalet = new Color[5] { Color.Black, Color.White, Color.Red, Color.Green, Color.Blue };
 
-            // Draw the original image onto the lower quality image with stretching
-            e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Low;
+
+            spreadValue = 255 / spreadValue;
+
+            // Downscale the original image
+            int scaledWidth = originalImage.Width / 3; // Adjust the scaling factor as needed
+            int scaledHeight = originalImage.Height / 3;
+            Bitmap bitmap = new Bitmap(originalImage, scaledWidth, scaledHeight);
+
+
+
+            int dementions = 2;
+
 
 
             for (int y = 0; y < bitmap.Height; y++)
@@ -84,65 +97,26 @@ namespace Dither_Testing
                 {
                     #region dither test
                     Color bitmapColor = bitmap.GetPixel(x, y);
-                    int rX = x % dementions;
-                    int rY = y % dementions;
-                    double offset = dementions * (dementions / 2) - 0.5;
+                    double threshhold = bayer2[x % dementions, y % dementions];
 
-                    double threshhold = bayer8[rX, rY];
+                    threshhold = threshhold / Math.Pow(dementions, 2) - 0.5;
 
-                    threshhold = threshhold * (1 / Math.Pow(dementions, 2)) - 0.5;
-                    Color nearestColor = FindNearestColor(bitmapColor, neonPalet);
+                    double LimitR = Math.Floor((numberOfColors - 1) * bitmapColor.R / 255.0) * (255 / (numberOfColors - 1));
+                    double LimitG = Math.Floor((numberOfColors - 1) * bitmapColor.G / 255.0) * (255 / (numberOfColors - 1));
+                    double LimitB = Math.Floor((numberOfColors - 1) * bitmapColor.B / 255.0) * (255 / (numberOfColors - 1));
 
+                    int newR = Clamp(Convert.ToInt32(LimitR * (bitmapColor.R + spreadValue * (threshhold - 0.5))), 0, 255);
+                    int newG = Clamp(Convert.ToInt32(LimitG * (bitmapColor.G + spreadValue * (threshhold - 0.5))), 0, 255);
+                    int newB = Clamp(Convert.ToInt32(LimitB * (bitmapColor.B + spreadValue * (threshhold - 0.5))), 0, 255);
 
-
-                    
-                    int newLimitR = Convert.ToInt32((Math.Floor((n - 1) * bitmapColor.R / 255.0) * (255 / (n - 1))));
-                    int newLimitG = Convert.ToInt32((Math.Floor((n - 1) * bitmapColor.G / 255.0) * (255 / (n - 1))));
-                    int newLimitB = Convert.ToInt32((Math.Floor((n - 1) * bitmapColor.B / 255.0) * (255 / (n - 1))));
-
-                    int test1 = Clamp(Convert.ToInt32(newLimitR * (bitmapColor.R+ spreadValue * (threshhold - 0.5))), 0, 255);
-                    int test2 = Clamp(Convert.ToInt32(newLimitG * (bitmapColor.G+ spreadValue * (threshhold - 0.5))), 0, 255);
-                    int test3 = Clamp(Convert.ToInt32(newLimitB * (bitmapColor.B+ spreadValue * (threshhold - 0.5))), 0, 255);
-
-
-
-                    bitmap.SetPixel(x, y, Color.FromArgb(test1, test2, test3));
+                    bitmap.SetPixel(x, y, Color.FromArgb(newR, newG, newB));
                     #endregion
-
-
-
                 }
             }
+            // Upscale the downscaled image
+            Bitmap upscaledImage = new Bitmap(bitmap, originalImage.Width, originalImage.Height);
+            return upscaledImage;
 
-            return bitmap;
-        }
-
-
-
-        static Color FindNearestColor(Color desiredColor, Color[] palette)
-        {
-            Color nearestColor = palette[0];
-            double minDistance = ColorDistance(desiredColor, palette[0]);
-
-            foreach (Color color in palette)
-            {
-                double distance = ColorDistance(desiredColor, color);
-                if (distance < minDistance)
-                {
-                    minDistance = distance;
-                    nearestColor = color;
-                }
-            }
-
-            return nearestColor;
-        }
-
-        static double ColorDistance(Color color1, Color color2)
-        {
-            int rDiff = color1.R - color2.R;
-            int gDiff = color1.G - color2.G;
-            int bDiff = color1.B - color2.B;
-            return Math.Sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
         }
 
         public static Color AddNoiseToPixel(Color originalColor, double noiseValue)
@@ -172,12 +146,90 @@ namespace Dither_Testing
         public Form1()
         {
             InitializeComponent();
-            Refresh();
+            player = new Rectangle(0, 0, 20, 20);
+            form1Bitmap = new Bitmap(this.Width, this.Height);
+            preFilter = Graphics.FromImage(form1Bitmap);
         }
 
-        private void Form1_Paint(object sender, PaintEventArgs e)
+        private void  Form1_Paint(object sender, PaintEventArgs e)
         {
-            e.Graphics.DrawImage(Dither(e, 255 / 0.99), new PointF(0,0));
+            form1Bitmap = new Bitmap(this.Width, this.Height);
+            preFilter = Graphics.FromImage(form1Bitmap);
+            preFilter.DrawRectangle(whitePen, player);
+
+            // Capture the form's content into a bitmap
+
+            // Apply dithering to the captured bitmap
+            Bitmap ditheredBitmap = Dither(form1Bitmap, 4, 20);
+
+            // Draw the dithered bitmap onto the form
+            e.Graphics.DrawImage(ditheredBitmap, new PointF(0, 0));
+            
+            // Dispose of the bitmaps
+            form1Bitmap.Dispose();
+            ditheredBitmap.Dispose();
+        }
+
+        #region Movement Code
+        private void Form1_KeyDown(object sender, KeyEventArgs e)
+        {
+            switch (e.KeyCode)
+            {
+                case Keys.W:
+                    wKeyDown = true;
+                    break;
+                case Keys.S:
+                    sKeyDown = true;
+                    break;
+                case Keys.A:
+                    aKeyDown = true;
+                    break;
+                case Keys.D:
+                    dKeyDown = true;
+                    break;
+
+            }
+        }
+
+        private void Form1_KeyUp(object sender, KeyEventArgs e)
+        {
+            switch (e.KeyCode)
+            {
+                case Keys.W:
+                    wKeyDown = false;
+                    break;
+                case Keys.S:
+                    sKeyDown = false;
+                    break;
+                case Keys.A:
+                    aKeyDown = false;
+                    break;
+                case Keys.D:
+                    dKeyDown = false;
+                    break;
+            }
+        }
+        #endregion
+
+        private void GameTick_Tick(object sender, EventArgs e)
+        {
+            if (wKeyDown == true)
+            {
+                player.Y-= 4;
+            }
+            if (aKeyDown == true)
+            {
+                player.X-= 4;
+            }
+            if (sKeyDown == true)
+            {
+                player.Y+= 4;
+            }
+            if (dKeyDown == true)
+            {
+                player.X+= 4;
+            }
+            Refresh();
         }
     }
 }
