@@ -81,13 +81,13 @@ namespace Dither_Testing
             spreadValue = 255 / spreadValue;
 
             // Downscale the original image
-            int scaledWidth = originalImage.Width / 3; // Adjust the scaling factor as needed
-            int scaledHeight = originalImage.Height / 3;
+            int scaledWidth = (int)(originalImage.Width / 4); // Adjust the scaling factor as needed
+            int scaledHeight = (int)(originalImage.Height / 4);
             Bitmap bitmap = new Bitmap(originalImage, scaledWidth, scaledHeight);
+            bitmap = new Bitmap(bitmap, originalImage.Width, originalImage.Height);
 
 
-
-            int dementions = 2;
+            int dementions = 4;
 
 
 
@@ -97,7 +97,7 @@ namespace Dither_Testing
                 {
                     #region dither test
                     Color bitmapColor = bitmap.GetPixel(x, y);
-                    double threshhold = bayer2[x % dementions, y % dementions];
+                    double threshhold = bayer4[x % dementions, y % dementions];
 
                     threshhold = threshhold / Math.Pow(dementions, 2) - 0.5;
 
@@ -114,7 +114,7 @@ namespace Dither_Testing
                 }
             }
             // Upscale the downscaled image
-            Bitmap upscaledImage = new Bitmap(bitmap, originalImage.Width, originalImage.Height);
+            Bitmap upscaledImage = new Bitmap(bitmap, originalImage.Width / 2, originalImage.Height/ 2);
             return upscaledImage;
 
         }
@@ -146,7 +146,7 @@ namespace Dither_Testing
         public Form1()
         {
             InitializeComponent();
-            player = new Rectangle(0, 0, 20, 20);
+            player = new Rectangle(0, 0, 1, 3);
             form1Bitmap = new Bitmap(this.Width, this.Height);
             preFilter = Graphics.FromImage(form1Bitmap);
         }
@@ -155,12 +155,11 @@ namespace Dither_Testing
         {
             form1Bitmap = new Bitmap(this.Width, this.Height);
             preFilter = Graphics.FromImage(form1Bitmap);
-            preFilter.DrawRectangle(whitePen, player);
-
+            preFilter.DrawImage( Properties.Resources.GTTOD, new PointF(0, 0)); 
             // Capture the form's content into a bitmap
 
             // Apply dithering to the captured bitmap
-            Bitmap ditheredBitmap = Dither(form1Bitmap, 4, 20);
+            Bitmap ditheredBitmap = Dither(form1Bitmap, 1.1, 100);
 
             // Draw the dithered bitmap onto the form
             e.Graphics.DrawImage(ditheredBitmap, new PointF(0, 0));
