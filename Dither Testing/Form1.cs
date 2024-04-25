@@ -86,8 +86,8 @@ namespace Dither_Testing
             Bitmap bitmap = new Bitmap(originalImage, scaledWidth, scaledHeight);
             bitmap = new Bitmap(bitmap, originalImage.Width, originalImage.Height);
 
-
-            int dementions = 4;
+            // must be the same number as the bayer array
+            int dementions = 16;
 
 
 
@@ -97,7 +97,8 @@ namespace Dither_Testing
                 {
                     #region dither test
                     Color bitmapColor = bitmap.GetPixel(x, y);
-                    double threshhold = bayer4[x % dementions, y % dementions];
+                    // change the bayer to 2, 4, 8, and 16
+                    double threshhold = bayer16[x % dementions, y % dementions];
 
                     threshhold = threshhold / Math.Pow(dementions, 2) - 0.5;
 
@@ -113,8 +114,8 @@ namespace Dither_Testing
                     #endregion
                 }
             }
-            // Upscale the downscaled image
-            Bitmap upscaledImage = new Bitmap(bitmap, originalImage.Width / 2, originalImage.Height/ 2);
+            // Upscale the downscaled image to whatever size you want
+            Bitmap upscaledImage = new Bitmap(bitmap, originalImage.Width / 1, originalImage.Height/ 1);
             return upscaledImage;
 
         }
@@ -155,15 +156,19 @@ namespace Dither_Testing
         {
             form1Bitmap = new Bitmap(this.Width, this.Height);
             preFilter = Graphics.FromImage(form1Bitmap);
-            preFilter.DrawImage( Properties.Resources.GTTOD, new PointF(0, 0)); 
+            preFilter.DrawImage( Properties.Resources.tenor_2728146430, new PointF(0, 0)); 
             // Capture the form's content into a bitmap
 
             // Apply dithering to the captured bitmap
-            Bitmap ditheredBitmap = Dither(form1Bitmap, 1.1, 100);
+            // first veriable is the color spread nad the second one limits the amount of 8 bit colors
+            Bitmap ditheredBitmap = Dither(form1Bitmap, 1.1, 50);
 
             // Draw the dithered bitmap onto the form
             e.Graphics.DrawImage(ditheredBitmap, new PointF(0, 0));
-            
+            // change this to the image file path to the one on the left, copy full path and then add "image.png" to the end of it after the slash
+            string filePath = @"C:\Users\Rowan Locke\source\repos\Dither Testing\Dither Testing\Image\image.png";
+
+            ditheredBitmap.Save(filePath, System.Drawing.Imaging.ImageFormat.Png);
             // Dispose of the bitmaps
             form1Bitmap.Dispose();
             ditheredBitmap.Dispose();
@@ -228,7 +233,7 @@ namespace Dither_Testing
             {
                 player.X+= 4;
             }
-            Refresh();
+            //Refresh();
         }
     }
 }
