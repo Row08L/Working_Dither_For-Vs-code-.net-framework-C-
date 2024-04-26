@@ -199,10 +199,10 @@ namespace Dither_Testing
             //
             //
             //
-            //form1Bitmap = new Bitmap(this.Width, this.Height);
-            //preFilter = Graphics.FromImage(form1Bitmap);
-            //preFilter.DrawImage(image2, new PointF(0, 0));
-            //preFilter.DrawImage(Properties.Resources.tenor_2728146430, new PointF(0, 0));
+            form1Bitmap = new Bitmap(this.Width, this.Height);
+            preFilter = Graphics.FromImage(form1Bitmap);
+           ///preFilter.DrawImage(image2, new PointF(0, 0));
+            preFilter.DrawImage(Properties.Resources.tenor_2728146430, new PointF(0, 0));
 
             // first veriable is the color spread nad the second one limits the amount of 8 bit colors
             Bitmap ditheredBitmap = Dither(form1Bitmap, 1.1, 50);
