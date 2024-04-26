@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Threading;
 using System.Drawing.Imaging;
+using System.IO;
+using System.Xml;
+using System.Xml.Serialization;
 
 namespace Dither_Testing
 {
@@ -154,21 +157,68 @@ namespace Dither_Testing
 
         private void  Form1_Paint(object sender, PaintEventArgs e)
         {
-            form1Bitmap = new Bitmap(this.Width, this.Height);
-            preFilter = Graphics.FromImage(form1Bitmap);
-            preFilter.DrawImage( Properties.Resources.tenor_2728146430, new PointF(0, 0)); 
-            // Capture the form's content into a bitmap
+            //// Load an image from file
+            //Image image = Properties.Resources.GTTOD;
+            //
+            //// Convert the image to a base64 string
+            //string base64Image = ImageToBase64(image);
+            //
+            //// Create an XML document
+            //XmlDocument xmlDocument = new XmlDocument();
+            //
+            //// Create the root element
+            //XmlElement root = xmlDocument.CreateElement("ImageData");
+            //xmlDocument.AppendChild(root);
+            //
+            //// Add the base64 image data as a child element
+            //XmlElement imageElement = xmlDocument.CreateElement("Image");
+            //imageElement.InnerText = base64Image;
+            //root.AppendChild(imageElement);
+            //
+            //// Save the XML document to a file
+            //xmlDocument.Save("C:/Users/Rowan Locke/source/repos/Dither Testing/Dither Testing/Image/imageData.xml");
+            //
+            //XmlDocument xmlDocument1 = new XmlDocument();
+            //xmlDocument1.Load("C:/Users/Rowan Locke/source/repos/Dither Testing/Dither Testing/Image/imageData.xml");
+            //
+            //// Get the base64 image data from the XML
+            //XmlNode imageNode = xmlDocument1.SelectSingleNode("/ImageData/Image");
+            //string base64Image1 = imageNode.InnerText;
+            //
+            //// Convert the base64 string back to a byte array
+            //byte[] imageBytes = Convert.FromBase64String(base64Image1);
+            //
+            //Image image2;
+            //// Create a memory stream from the byte array
+            //using (MemoryStream ms = new MemoryStream(imageBytes))
+            //{
+            //    // Create an image from the memory stream
+            //    image2 = Image.FromStream(ms);
+            //
+            //}
+            //
+            //
+            //
+            //form1Bitmap = new Bitmap(this.Width, this.Height);
+            //preFilter = Graphics.FromImage(form1Bitmap);
+            //preFilter.DrawImage(image2, new PointF(0, 0));
+            //preFilter.DrawImage(Properties.Resources.tenor_2728146430, new PointF(0, 0));
 
-            // Apply dithering to the captured bitmap
             // first veriable is the color spread nad the second one limits the amount of 8 bit colors
             Bitmap ditheredBitmap = Dither(form1Bitmap, 1.1, 50);
 
             // Draw the dithered bitmap onto the form
             e.Graphics.DrawImage(ditheredBitmap, new PointF(0, 0));
-            // change this to the image file path to the one on the left, copy full path and then add "image.png" to the end of it after the slash
-            string filePath = @"C:\Users\Rowan Locke\source\repos\Dither Testing\Dither Testing\Image\image.png";
 
-            ditheredBitmap.Save(filePath, System.Drawing.Imaging.ImageFormat.Png);
+            string currentDirectory = AppDomain.CurrentDomain.BaseDirectory;
+
+            string parent1 = Directory.GetParent(currentDirectory).FullName;
+            string parent2 = Directory.GetParent(parent1).FullName;
+            string parent3 = Directory.GetParent(parent2).FullName;
+
+            string fullPath = Path.Combine(parent3, "Image", "image.png");
+
+            ditheredBitmap.Save(fullPath, System.Drawing.Imaging.ImageFormat.Png);
             // Dispose of the bitmaps
             form1Bitmap.Dispose();
             ditheredBitmap.Dispose();
@@ -234,6 +284,20 @@ namespace Dither_Testing
                 player.X+= 4;
             }
             //Refresh();
+        }
+
+        static string ImageToBase64(Image image)
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                // Convert the image to a byte array
+                image.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
+                byte[] imageBytes = ms.ToArray();
+
+                // Convert the byte array to a base64 string
+                string base64String = Convert.ToBase64String(imageBytes);
+                return base64String;
+            }
         }
     }
 }
